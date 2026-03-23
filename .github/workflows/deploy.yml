@@ -27,7 +27,7 @@ jobs:
         port: 22
         source: "."
         target: "/home/ec2-user/lnproj/lnproj-basic1/"
-        rm: true  # removes old files before copy
+        rm: true
         strip_components: 1
 
     - name: Start Flask app on EC2
@@ -39,8 +39,23 @@ jobs:
         port: 22
         script: |
           cd /home/ec2-user/lnproj/lnproj-basic1/
-          # Kill previous Flask process if exists, ignore errors
+          # Kill previous Flask process if exists
           pkill -f app.py || echo "No previous app running"
-          # Start Flask app in background, logging output to app.log
-          nohup python3 app.py > app.log 2>&1 &
+          # Start Flask in background detached from terminal
+          setsid python3 app.py > app.log 2>&1 < /dev/null &
           echo "Flask app started successfully"
+
+    - name: Verify Flask app is running
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_KEY }}
+        port: 22
+        script: |
+          if pgrep -f app.py > /dev/null; then
+            echo "Flask app is running ✅"
+          else
+            echo "Flask app is NOT running ❌"
+            exit 1
+          fi
