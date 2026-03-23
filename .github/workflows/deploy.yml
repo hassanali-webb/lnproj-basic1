@@ -39,8 +39,8 @@ jobs:
         port: 22
         script: |
           cd /home/ec2-user/lnproj/lnproj-basic1/
-          # Stop any running Flask app
-          pkill -f app.py || true
-          # Start Flask in background, logs to app.log
+          # Kill previous Flask process if exists, ignore errors
+          pkill -f app.py || echo "No previous app running"
+          # Start Flask app in background, logging output to app.log
           nohup python3 app.py > app.log 2>&1 &
           echo "Flask app started successfully"
