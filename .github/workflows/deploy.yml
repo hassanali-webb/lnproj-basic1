@@ -13,22 +13,34 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Install Python (optional if needed on runner)
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
     - name: Copy code to EC2
-      uses: appleboy/scp-action@v0.1.4
+      uses: appleboy/scp-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ec2-user
         key: ${{ secrets.EC2_KEY }}
+        port: 22
         source: "."
         target: "/home/ec2-user/lnproj/lnproj-basic1/"
+        rm: true  # removes old files before copy
+        strip_components: 1
 
-    - name: SSH and restart Flask
+    - name: Start Flask app on EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ec2-user
         key: ${{ secrets.EC2_KEY }}
+        port: 22
         script: |
           cd /home/ec2-user/lnproj/lnproj-basic1/
+          # Stop any running Flask app
           pkill -f app.py || true
-          nohup python3 app.py &
+          # Start Flask in background, logs to app.log
+          nohup python3 app.py > app.log 2>&1 &
+          echo "Flask app started successfully"
