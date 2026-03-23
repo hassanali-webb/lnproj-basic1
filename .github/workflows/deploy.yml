@@ -17,18 +17,18 @@ jobs:
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
+        username: ec2-user
         key: ${{ secrets.EC2_KEY }}
         source: "."
-        target: "/home/ubuntu/project1-cicd"
+        target: "/home/ec2-user/lnproj/lnproj-basic1/"
 
     - name: SSH and restart Flask
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ubuntu
+        username: ec2-user
         key: ${{ secrets.EC2_KEY }}
         script: |
-          cd /home/ubuntu/project1-cicd
+          cd /home/ec2-user/lnproj/lnproj-basic1/
           pkill -f app.py || true
           nohup python3 app.py &
