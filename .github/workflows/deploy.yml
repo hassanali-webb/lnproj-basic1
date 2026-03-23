@@ -13,7 +13,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install Python (optional if needed on runner)
+    - name: Install Python on runner (optional)
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
@@ -30,7 +30,7 @@ jobs:
         rm: true
         strip_components: 1
 
-    - name: Start Flask app on EC2
+    - name: Restart Flask service on EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -38,24 +38,6 @@ jobs:
         key: ${{ secrets.EC2_KEY }}
         port: 22
         script: |
-          cd /home/ec2-user/lnproj/lnproj-basic1/
-          # Kill previous Flask process if exists
-          pkill -f app.py || echo "No previous app running"
-          # Start Flask in background detached from terminal
-          setsid python3 app.py > app.log 2>&1 < /dev/null &
-          echo "Flask app started successfully"
-
-    - name: Verify Flask app is running
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ec2-user
-        key: ${{ secrets.EC2_KEY }}
-        port: 22
-        script: |
-          if pgrep -f app.py > /dev/null; then
-            echo "Flask app is running ✅"
-          else
-            echo "Flask app is NOT running ❌"
-            exit 1
-          fi
+          sudo systemctl daemon-reload
+          sudo systemctl restart flaskapp
+          sudo systemctl status flaskapp --no-pager
